@@ -142,6 +142,9 @@ function DealsBoard({ open }: { open: (contactId: string) => void }) {
   const [owner, setOwner] = useState<string>("All owners");
   const deals = DEALS.filter((d) => owner === "All owners" || d.owner === owner);
   const openTotal = deals.filter((d) => d.stage !== "won").reduce((sum, d) => sum + d.amount, 0);
+  const weighted = (stage: (typeof STAGES)[number]) =>
+    Math.round(deals.filter((d) => d.stage === stage.id).reduce((sum, d) => sum + d.amount, 0) * stage.probability / 100);
+  const weightedTotal = STAGES.reduce((sum, stage) => sum + weighted(stage), 0);
 
   return (
     <div className="flex h-full flex-col">
@@ -159,7 +162,10 @@ function DealsBoard({ open }: { open: (contactId: string) => void }) {
         <Button primary>Create deal</Button>
       </PageHeader>
       <div className="px-6 pb-3 text-slate-500">
-        {deals.length} deals · {formatSek(openTotal)} open
+        {deals.length} deals · {formatSek(openTotal)} open ·{" "}
+        <span id="pipeline-weighted-total" className="font-medium text-slate-700">
+          {formatSek(weightedTotal)} weighted
+        </span>
       </div>
       <div id="deals-board" className="flex min-h-0 flex-1 gap-3 overflow-x-auto px-6 pb-6">
         {STAGES.map((stage) => {
@@ -180,6 +186,9 @@ function DealsBoard({ open }: { open: (contactId: string) => void }) {
                 </div>
                 <div className="mt-0.5 text-[12px] text-slate-500">
                   {formatSek(total)} · {stage.probability}%
+                </div>
+                <div className="text-[12px] font-medium text-slate-700" data-weighted={weighted(stage)}>
+                  {formatSek(weighted(stage))} weighted
                 </div>
               </header>
               <div className="flex flex-col gap-2 overflow-y-auto px-2 pb-2">
