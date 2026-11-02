@@ -195,8 +195,13 @@ function DealsBoard({ open }: { open: (contactId: string) => void }) {
   );
 }
 
+// A deal with no activity for this many days is flagged as stale on the board.
+const STALE_DAYS = 14;
+
 function DealCard({ deal, probability, open }: { deal: Deal; probability: number; open: (contactId: string) => void }) {
   const company = companyOf(deal.companyId);
+  const idleDays = daysBetween(deal.lastActivity, TODAY);
+  const stale = idleDays >= STALE_DAYS;
   return (
     <button
       type="button"
@@ -208,8 +213,18 @@ function DealCard({ deal, probability, open }: { deal: Deal; probability: number
       data-owner={deal.owner}
       data-close-date={deal.closeDate}
       data-last-activity={deal.lastActivity}
-      className="deal-card flex flex-col gap-1.5 rounded-md border border-slate-200 bg-white p-3 text-left shadow-[0_1px_1px_rgba(0,0,0,.03)] hover:border-teal-300"
+      data-stale={stale || undefined}
+      data-idle-days={idleDays}
+      className={cn(
+        "deal-card flex flex-col gap-1.5 rounded-md border bg-white p-3 text-left shadow-[0_1px_1px_rgba(0,0,0,.03)] hover:border-teal-300",
+        stale ? "border-amber-300 border-l-4 border-l-amber-400" : "border-slate-200",
+      )}
     >
+      {stale && (
+        <span className="stale-flag self-start rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+          No activity for {idleDays} days
+        </span>
+      )}
       <span className="font-medium text-slate-900">{deal.name}</span>
       <span className="text-[12px] text-slate-500">{company.name}</span>
       <div className="mt-1 flex items-center justify-between">
